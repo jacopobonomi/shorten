@@ -4,9 +4,31 @@ require("dotenv").config();
 
 import cacheNode from "./src/libs/cache";
 import LinksController from "./src/controllers/links";
+import morgan from "morgan";
+import cors from "cors";
+import compression from "compression";
+import rateLimit from "express-rate-limit";
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 100,
+  message: "Too request from this IP, please try again after a minute"
+});
+
+app.use(morgan("common"));
+app.use(compression());
+app.use(limiter); //  apply to all requests
+
+app.use(
+  cors({
+    origin: ["http://localhost:3001"],
+    methods: ["GET", "POST", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 app.use(express.json());
 app.use(
