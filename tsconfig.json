@@ -12,6 +12,7 @@
     "pretty": true,
     "outDir": "build",
     "resolveJsonModule": true,
-    
-  },
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
+  }
 }

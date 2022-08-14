@@ -4,12 +4,17 @@ import { ILink, ILinkDTO } from "../models/ILink";
 
 const { nanoid } = require("nanoid");
 const TABLE_NAME = "links";
+const BASE_PATH = process.env.BASE_URL;
 
-export const putLink = async (link: ILinkDTO) => {
-  const newLink = {
-    ...link,
-    slug: link.slug ? link.slug : nanoid(6),
+export const putLink = async ({ redirect, slug }: ILinkDTO) => {
+  const insertSlug: string = slug ? slug : nanoid(6);
+
+  const newLink: ILink = {
+    redirect,
+    short_link: `${BASE_PATH}/${insertSlug}`,
+    slug: insertSlug,
   };
+
   const params = {
     TableName: TABLE_NAME,
     Item: newLink,
@@ -20,7 +25,6 @@ export const putLink = async (link: ILinkDTO) => {
     return newLink;
   } catch (err) {
     console.error(err);
-    return { message: err, status: "error" };
   }
 };
 
@@ -52,6 +56,5 @@ export const deleteLink = async (slug: string) => {
     return { message: "Link deleted", status: "success" };
   } catch (err) {
     console.error(err);
-    return { message: err, status: "error" };
   }
 };
