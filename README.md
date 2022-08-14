@@ -22,13 +22,15 @@ Simple shortener service with DynamoDB, Express and nanoid.
 cp .env.example .env
 ```
 
-On .env you need to set the following variables:
+Edit .env with yours following variables:
 
-- PORT - port to listen on
-- BASE_URL - base url for shortener service
-- AWS_REGION - AWS region
-- LINKS_TABLE_NAME - DynamoDB table name for links
-- CACHE_TTL - cache TTL for redirects in seconds (default: 60)
+```
+PORT - port to listen on
+BASE_URL - base url for shortener service
+AWS_REGION - AWS region
+LINKS_TABLE_NAME - DynamoDB table name for links
+CACHE_TTL - cache TTL for redirects in seconds (default: 60)
+```
 
 To use DynamoDB on you machine you need to install AWS SDK and configure it:
 
@@ -64,6 +66,16 @@ git clone <repo>
 cd <repo>
 yarn install
 yarn start:cluster
+```
+
+## Server
+
+Use Nginx to manage reverse proxy, certficate and custom domain.
+And use pm2 to start cluster mode.
+
+```bash
+sudo apt-get install nginx
+pm2 start -1 <NODES_NUMBER> yarn start:
 ```
 
 ## Todo
