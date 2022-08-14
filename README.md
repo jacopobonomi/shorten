@@ -1,6 +1,6 @@
-# SHORTEN
+[![](https://i.ibb.co/XC8sJYY/1.png)](https://i.ibb.co/XC8sJYY/1.png)
 
-Simple shortener service with DynamoDB, Express and nanoid.
+#### **Simple self hosted, open source**, shorten link service written in Node(Typescript) using DynamoDB.
 
 ## Features
 
@@ -10,6 +10,7 @@ Simple shortener service with DynamoDB, Express and nanoid.
 - [x] Swagger documentation (/links/docs) ✅
 - [x] Clustering mode (for high traffic) ✅
 - [x] Redirects ✅
+- [x] Loggin with morgan ✅
 - [x] Caching for redirects on memory with custom TTL ✅
 - [x] Rate limit on apis ✅
 - [x] Error handling ✅
@@ -24,7 +25,7 @@ cp .env.example .env
 
 Edit .env with yours following variables:
 
-```
+```bash
 PORT - port to listen on
 BASE_URL - base url for shortener service
 AWS_REGION - AWS region
@@ -87,3 +88,4 @@ pm2 start -1 <NODES_NUMBER> yarn start:
 - [ ] Add analytics for short URL
 - [ ] Add auto exctract short slug from redirect url
 - [ ] Add another provider for database (Redis, MongoDB, Firebase(?))>
+- [ ] GUI (SolidJS)?

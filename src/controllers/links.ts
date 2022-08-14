@@ -46,7 +46,9 @@ export default class LinksController {
   public insertLink = async (req: Request, res: Response) => {
     const { body: link } = req;
     const createdLink = (await putLink(link)) as ILink;
-    await this.cacheNode.setItem(createdLink.slug, null, { ttl: CACHE_TTL });
+
+    await this.cacheNode.setItem(createdLink.slug, null, { ttl: 0 });
+
     res.json(createdLink);
   };
 
@@ -62,7 +64,7 @@ export default class LinksController {
         const { redirect } = link;
 
         if (redirect) {
-          await this.cacheNode.setItem(_slug, link, { ttl: 60 });
+          this.cacheNode.setItem(_slug, link, { ttl: CACHE_TTL });
           return res.redirect(redirect);
         } else {
           return res.status(404).json({ message: "redirect not found" });
