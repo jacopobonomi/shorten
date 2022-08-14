@@ -1,6 +1,6 @@
 import { PutCommand, GetCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import { ddbDocClient } from "../libs/ddbDocClient";
-import { ILink, ILinkDTO } from "../models/link";
+import { ILink, ILinkDTO } from "../models/ILink";
 
 const { nanoid } = require("nanoid");
 const TABLE_NAME = "links";

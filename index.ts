@@ -1,7 +1,8 @@
-import express, { Express } from "express";
+import express, { Express, ErrorRequestHandler } from "express";
 const bodyParser = require("body-parser");
-require('dotenv').config();
+require("dotenv").config();
 
+import cacheNode from "./src/libs/cache";
 import LinksController from "./src/controllers/links";
 
 const app: Express = express();
@@ -14,11 +15,24 @@ app.use(
   })
 );
 
-new LinksController(app);
+//TODO: migrate logic to separate file, for better error handling
+app.use((err: any, req: any, res: any, next: any) => {
+  if (err.status === 400 && "body" in err) {
+    console.error(err);
+    return res
+      .status(400)
+      .json({ status: false, error: "Enter valid json body" });
+  }
+  next();
+});
 
-app.listen(port, () => console.log(`
+new LinksController(app, cacheNode);
+
+app.listen(port, () =>
+  console.log(`
 +-+-+-+-+-+-+-+
 |S|h|o|r|t|e|n|
 +-+-+-+-+-+-+-+               
                              
-Start on port ${port}`));
+Start on port ${port}`)
+);
