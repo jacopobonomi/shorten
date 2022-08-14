@@ -1,9 +1,12 @@
 import { PutCommand, GetCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
-import { ddbDocClient } from "../libs/ddbDocClient";
+import { db } from "../libs/ddbDocClient";
+
 import { ILink, ILinkDTO } from "../models/ILink";
 
+//FIX: Strange import bug
 const { nanoid } = require("nanoid");
-const TABLE_NAME = "links";
+
+const TABLE_NAME = process.env.LINKS_TABLE_NAME || "links";
 const BASE_PATH = process.env.BASE_URL;
 
 export const putLink = async ({ redirect, slug }: ILinkDTO) => {
@@ -21,7 +24,7 @@ export const putLink = async ({ redirect, slug }: ILinkDTO) => {
   };
 
   try {
-    await ddbDocClient.send(new PutCommand(params));
+    await db.send(new PutCommand(params));
     return newLink;
   } catch (err) {
     console.error(err);
@@ -36,9 +39,9 @@ export const getLink = async (slug: string): Promise<ILink | undefined> => {
     },
   };
   try {
-    const data = await ddbDocClient.send(new GetCommand(params));
-    const link: ILink = data.Item as ILink;
-    return link;
+    return (await (
+      await db.send(new GetCommand(params))
+    ).Item) as ILink;
   } catch (err) {
     console.error(err);
   }
@@ -52,7 +55,7 @@ export const deleteLink = async (slug: string) => {
     },
   };
   try {
-    await ddbDocClient.send(new DeleteCommand(params));
+    await db.send(new DeleteCommand(params));
     return { message: "Link deleted", status: "success" };
   } catch (err) {
     console.error(err);

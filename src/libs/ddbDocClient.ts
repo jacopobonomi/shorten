@@ -12,6 +12,6 @@ const unmarshallOptions = {
 };
 
 const translateConfig = { marshallOptions, unmarshallOptions };
-const ddbDocClient = DynamoDBDocumentClient.from(ddbClient, translateConfig);
+const db = DynamoDBDocumentClient.from(ddbClient, translateConfig);
 
-export { ddbDocClient };
+export { db };

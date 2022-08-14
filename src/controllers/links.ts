@@ -3,12 +3,15 @@ import { Request, Response } from "express";
 import { CacheContainer } from "node-ts-cache";
 import { param } from "express-validator";
 import swaggerUi from "swagger-ui-express";
+import { env } from "process";
 
 import { putLink, getLink, deleteLink } from "../services/links";
 
 import { ILink } from "../models/ILink";
 
 const { linksDocs } = require("../../docs/links.doc");
+
+const CACHE_TTL: any = parseInt(env.CACHE_TTL as string) || 60;
 
 export default class LinksController {
   private cacheNode;
@@ -43,7 +46,7 @@ export default class LinksController {
   public insertLink = async (req: Request, res: Response) => {
     const { body: link } = req;
     const createdLink = (await putLink(link)) as ILink;
-    await this.cacheNode.setItem(createdLink.slug, null, { ttl: 60 });
+    await this.cacheNode.setItem(createdLink.slug, null, { ttl: CACHE_TTL });
     res.json(createdLink);
   };
 
