@@ -6,12 +6,12 @@ import { env } from "process";
 import { ILink } from "../models/ILink";
 import { putLink, getLink, deleteLink } from "../services/links.service";
 
-const CACHE_TTL: any = parseInt(env.CACHE_TTL as string) || 60;
+const CACHE_TTL: number = parseInt(env.CACHE_TTL as string) || 60;
 
 export default class LinksController {
   private cacheNode;
 
-  constructor(app: Express, cacheNode: CacheContainer) {
+  constructor(app: Express, apiGuard: any, cacheNode: CacheContainer) {
     this.cacheNode = cacheNode;
 
     app.get(
@@ -28,6 +28,7 @@ export default class LinksController {
 
     app.post(
       "/api/links",
+      apiGuard,
       body("redirect").isString().exists().trim(),
       body("slug").isString().trim(),
       async (req: Request, res: Response) => {
