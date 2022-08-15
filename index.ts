@@ -24,7 +24,7 @@ app.use(limiter); //  apply to all requests
 
 app.use(
   cors({
-    origin: ["http://localhost:3001"],
+    origin: ["*"],
     methods: ["GET", "POST", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
