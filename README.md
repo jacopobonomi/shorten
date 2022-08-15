@@ -1,9 +1,10 @@
 [![](https://i.ibb.co/XC8sJYY/1.png)](https://i.ibb.co/XC8sJYY/1.png)
 
-#### **Simple self hosted, open source**, shorten link service written in Node(Typescript) using DynamoDB (build folder 36kb)
+#### **Tiny self hosted, open source**, shorten link service written in Node(Typescript) using DynamoDB.
 
 ## Features
 
+- [x] Tiny (build folder 42kb) ✅
 - [x] DynamoDB with AWS SDK as database provider (no configuration) ✅
 - [x] Create (same api for update) short URL ✅
 - [x] Delete short URL ✅

@@ -41,6 +41,7 @@ export default class LinksController {
 
     app.delete(
       "/api/links/:_slug",
+      apiGuard,
       [param("_slug").isString().exists().trim()],
       async (req: Request, res: Response) => {
         const errors = validationResult(req);

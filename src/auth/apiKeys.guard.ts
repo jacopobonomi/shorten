@@ -1,7 +1,11 @@
 import { env } from "process";
 import { Request, Response, NextFunction } from "express";
 
-export const apiKeyGuard = (req: Request, res: Response, next: NextFunction) => {
+export const apiKeyGuard = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): any => {
   if (!env.API_KEYS) {
     console.warn("No API Keys found in env, all requests will be allowed");
     next();
