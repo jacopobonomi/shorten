@@ -80,7 +80,7 @@ pm2 start -1 <NODES_NUMBER> yarn start:
 
 ## Todo
 
-- [ ] Authentication with API Key for POST/DELETE/PUT
+- [x] Authentication with API Key for POST/DELETE/PUT
 - [ ] Add readble slug for short URL optional parameter
 - [ ] Add domain on model, to manage multiple domains
 - [ ] Manage wrapper to run on Lambda AWS
