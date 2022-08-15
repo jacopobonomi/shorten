@@ -1,6 +1,6 @@
 [![](https://i.ibb.co/XC8sJYY/1.png)](https://i.ibb.co/XC8sJYY/1.png)
 
-#### **Simple self hosted, open source**, shorten link service written in Node(Typescript) using DynamoDB.
+#### **Simple self hosted, open source**, shorten link service written in Node(Typescript) using DynamoDB (build folder 36kb)
 
 ## Features
 
@@ -25,7 +25,7 @@ cp .env.example .env
 
 Edit .env with yours following variables:
 
-```bash
+```
 PORT - port to listen on
 BASE_URL - base url for shortener service
 AWS_REGION - AWS region
@@ -45,8 +45,8 @@ and set your region and credentials.
 ### Start
 
 ```bash
-git clone <repo>
-cd <repo>
+git clone https://github.com/jacopobonomi/shorten
+cd shorten
 yarn install
 yarn start
 ```
@@ -54,8 +54,8 @@ yarn start
 ### Development
 
 ```bash
-git clone <repo>
-cd <repo>
+git clone https://github.com/jacopobonomi/shorten
+cd shorten
 yarn install
 yarn start:dev
 ```
@@ -63,8 +63,8 @@ yarn start:dev
 ### Cluster start
 
 ```bash
-git clone <repo>
-cd <repo>
+git clone https://github.com/jacopobonomi/shorten
+cd shorten
 yarn install
 yarn start:cluster
 ```
@@ -75,7 +75,6 @@ Use Nginx to manage reverse proxy, certficate and custom domain.
 And use pm2 to start cluster mode.
 
 ```bash
-sudo apt-get install nginx
 pm2 start -1 <NODES_NUMBER> yarn start:
 ```
 
