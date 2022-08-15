@@ -1,15 +1,11 @@
-import { Express } from "express";
-import { Request, Response } from "express";
+import { Express, Request, Response } from "express";
 import { CacheContainer } from "node-ts-cache";
 import { param } from "express-validator";
-import swaggerUi from "swagger-ui-express";
 import { env } from "process";
 
+import { ILink } from "../models/ILink";
 import { putLink, getLink, deleteLink } from "../services/links";
 
-import { ILink } from "../models/ILink";
-
-const { linksDocs } = require("../../docs/links.doc");
 
 const CACHE_TTL: any = parseInt(env.CACHE_TTL as string) || 60;
 
@@ -20,8 +16,6 @@ export default class LinksController {
     this.cacheNode = cacheNode;
 
     //Documentation
-    app.use("/links/docs", swaggerUi.serve);
-    app.get("/links/docs", swaggerUi.setup(linksDocs));
 
     app.get(
       "/:_slug",

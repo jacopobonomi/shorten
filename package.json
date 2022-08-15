@@ -2,11 +2,11 @@
   "name": "shorten",
   "version": "1.0.0",
   "description": "Fast url shorten with dynamodb",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rimraf ./build && tsc",
-    "start": "npm run build && node build/index.js",
+    "start": "npm run build && node build/app.js",
     "start:cluster": "npm run build && node build/cluster.js",
     "start:dev": "nodemon"
   },

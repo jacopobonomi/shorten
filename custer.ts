@@ -17,5 +17,5 @@ if (cluster.isMaster) {
     cluster.fork();
   });
 } else {
-  require("./index");
+  require("./app");
 }

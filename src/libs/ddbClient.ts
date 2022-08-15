@@ -1,7 +1,10 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { env } from "process";
 
-if (!process.env.AWS_REGION) {
+if (!env.AWS_REGION) {
   throw new Error("AWS_REGION is not set on .env file");
 }
 
-export const ddbClient = new DynamoDBClient({ region: process.env.AWS_REGION });
+export const ddbClient: DynamoDBClient = new DynamoDBClient({
+  region: process.env.AWS_REGION,
+});

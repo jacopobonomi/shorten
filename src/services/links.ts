@@ -9,7 +9,10 @@ const { nanoid } = require("nanoid");
 const TABLE_NAME = process.env.LINKS_TABLE_NAME || "links";
 const BASE_PATH = process.env.BASE_URL;
 
-export const putLink = async ({ redirect, slug }: ILinkDTO) => {
+export const putLink = async ({
+  redirect,
+  slug,
+}: ILinkDTO): Promise<ILink | undefined> => {
   const insertSlug: string = slug ? slug : nanoid(6);
 
   const newLink: ILink = {
@@ -47,7 +50,7 @@ export const getLink = async (slug: string): Promise<ILink | undefined> => {
   }
 };
 
-export const deleteLink = async (slug: string) => {
+export const deleteLink = async (slug: string): Promise<any | undefined> => {
   const params = {
     TableName: TABLE_NAME,
     Key: {
