@@ -6,6 +6,8 @@ import {
   GetCommandInput,
   DeleteCommandInput,
 } from "@aws-sdk/lib-dynamodb";
+import { generateSlug } from "random-word-slugs";
+
 import { db } from "../libs/ddbDocClient";
 
 import { ILink, ILinkDTO } from "../models/ILink";
@@ -17,10 +19,15 @@ const TABLE_NAME = process.env.LINKS_TABLE_NAME || "links";
 const BASE_PATH = process.env.BASE_URL;
 
 export const putLink = async ({
+  readable,
   redirect,
   slug,
 }: ILinkDTO): Promise<ILink | undefined> => {
-  const insertSlug: string = slug ? slug : nanoid(6);
+  const insertSlug: string = slug
+    ? slug
+    : readable
+    ? generateSlug(1, { format: "title" }).toLocaleLowerCase()
+    : nanoid(6);
 
   const newLink: ILink = {
     redirect,

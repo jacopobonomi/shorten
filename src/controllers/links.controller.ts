@@ -30,7 +30,6 @@ export default class LinksController {
       "/api/links",
       apiGuard,
       body("redirect").isString().exists().trim(),
-      body("slug").isString().trim(),
       async (req: Request, res: Response) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
