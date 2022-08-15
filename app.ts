@@ -12,7 +12,7 @@ import rateLimitModule from "./src/libs/rateLimit";
 import { defaultDocumentation } from "./src/libs/documentation";
 
 import { ErrorHandler } from "./src/libs/errorHandler";
-import LinksController from "./src/controllers/links";
+import LinksController from "./src/controllers/links.controller";
 
 const app: Express = express();
 const port: number = parseInt(env.PORT as string) || 3000;

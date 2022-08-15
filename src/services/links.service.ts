@@ -1,4 +1,11 @@
-import { PutCommand, GetCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  PutCommand,
+  GetCommand,
+  DeleteCommand,
+  PutCommandInput,
+  GetCommandInput,
+  DeleteCommandInput,
+} from "@aws-sdk/lib-dynamodb";
 import { db } from "../libs/ddbDocClient";
 
 import { ILink, ILinkDTO } from "../models/ILink";
@@ -21,7 +28,7 @@ export const putLink = async ({
     slug: insertSlug,
   };
 
-  const params = {
+  const params: PutCommandInput = {
     TableName: TABLE_NAME,
     Item: newLink,
   };
@@ -35,7 +42,7 @@ export const putLink = async ({
 };
 
 export const getLink = async (slug: string): Promise<ILink | undefined> => {
-  const params = {
+  const params: GetCommandInput = {
     TableName: TABLE_NAME,
     Key: {
       slug: slug,
@@ -51,7 +58,7 @@ export const getLink = async (slug: string): Promise<ILink | undefined> => {
 };
 
 export const deleteLink = async (slug: string): Promise<any | undefined> => {
-  const params = {
+  const params: DeleteCommandInput = {
     TableName: TABLE_NAME,
     Key: {
       slug: slug,

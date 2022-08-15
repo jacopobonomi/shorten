@@ -1,11 +1,10 @@
 import { Express, Request, Response } from "express";
 import { CacheContainer } from "node-ts-cache";
-import { param } from "express-validator";
+import { param, body, validationResult } from "express-validator";
 import { env } from "process";
 
 import { ILink } from "../models/ILink";
-import { putLink, getLink, deleteLink } from "../services/links";
-
+import { putLink, getLink, deleteLink } from "../services/links.service";
 
 const CACHE_TTL: any = parseInt(env.CACHE_TTL as string) || 60;
 
@@ -15,20 +14,41 @@ export default class LinksController {
   constructor(app: Express, cacheNode: CacheContainer) {
     this.cacheNode = cacheNode;
 
-    //Documentation
-
     app.get(
       "/:_slug",
       [param("_slug").isString().exists().trim()],
-      async (req: Request, res: Response) => this.getLinks(req, res)
+      async (req: Request, res: Response) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+          return res.status(400).json({ errors: errors.array() });
+        }
+        return this.getLinks(req, res);
+      }
     );
 
-    app.post("/api/links", async (req: Request, res: Response) =>
-      this.insertLink(req, res)
+    app.post(
+      "/api/links",
+      body("redirect").isString().exists().trim(),
+      body("slug").isString().trim(),
+      async (req: Request, res: Response) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+          return res.status(400).json({ errors: errors.array() });
+        }
+        return this.insertLink(req, res);
+      }
     );
 
-    app.delete("/api/links/:_slug", async (req: Request, res: Response) =>
-      this.deleteLink(req, res)
+    app.delete(
+      "/api/links/:_slug",
+      [param("_slug").isString().exists().trim()],
+      async (req: Request, res: Response) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+          return res.status(400).json({ errors: errors.array() });
+        }
+        return this.deleteLink(req, res);
+      }
     );
   }
 
