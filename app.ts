@@ -20,10 +20,9 @@ import AnalyticsController from "./src/controllers/analytics.controller";
 const app: Express = express();
 const port: number = parseInt(env.PORT as string) || 3000;
 
-//TODO: need to move this logic in separate file for error handling
-app.use((err: any, res: Response, next: NextFunction) =>
-  err ? invalidBody(err, res) : next()
-);
+app.use((req: any, err: any, res: Response, next: NextFunction) => {
+  req.body && err ? invalidBody(err, res) : next();
+});
 
 app.use(morgan("common"));
 app.use(compression());
