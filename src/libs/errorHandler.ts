@@ -8,7 +8,6 @@ export const invalidBody = (err: any, res: any) => {
 export const validateBody = (req: Request) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    console.log(errors);
     return errors.array();
   }
   return false;

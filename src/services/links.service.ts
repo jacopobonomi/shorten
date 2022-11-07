@@ -5,6 +5,8 @@ import {
   PutCommandInput,
   GetCommandInput,
   DeleteCommandInput,
+  ScanCommand,
+  ScanCommandInput,
 } from "@aws-sdk/lib-dynamodb";
 import { generateSlug } from "random-word-slugs";
 
@@ -12,10 +14,10 @@ import { db } from "../libs/ddbDocClient";
 
 import { ILink, ILinkDTO } from "../models/ILink";
 
-//FIX: Strange import bug
+//[TODO]: Strange import bug
 const { nanoid } = require("nanoid");
 
-const TABLE_NAME = process.env.LINKS_TABLE_NAME || "links";
+const TableName = process.env.LINKS_TABLE_NAME || "links";
 const BASE_PATH = process.env.BASE_URL;
 
 export const putLink = async ({
@@ -36,7 +38,7 @@ export const putLink = async ({
   };
 
   const params: PutCommandInput = {
-    TableName: TABLE_NAME,
+    TableName,
     Item: newLink,
   };
 
@@ -45,12 +47,13 @@ export const putLink = async ({
     return newLink;
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };
 
 export const getLink = async (slug: string): Promise<ILink | undefined> => {
   const params: GetCommandInput = {
-    TableName: TABLE_NAME,
+    TableName,
     Key: {
       slug: slug,
     },
@@ -61,12 +64,27 @@ export const getLink = async (slug: string): Promise<ILink | undefined> => {
     ).Item) as ILink;
   } catch (err) {
     console.error(err);
+    throw err;
+  }
+};
+
+export const getLinks = async (): Promise<ILink[] | undefined> => {
+  const params: ScanCommandInput = {
+    TableName,
+  };
+  try {
+    return (await (
+      await db.send(new ScanCommand(params))
+    ).Items) as ILink[];
+  } catch (err) {
+    console.error(err);
+    throw err;
   }
 };
 
 export const deleteLink = async (slug: string): Promise<any | undefined> => {
   const params: DeleteCommandInput = {
-    TableName: TABLE_NAME,
+    TableName,
     Key: {
       slug: slug,
     },
@@ -76,5 +94,6 @@ export const deleteLink = async (slug: string): Promise<any | undefined> => {
     return { message: "Link deleted", status: "success" };
   } catch (err) {
     console.error(err);
+    throw err;
   }
 };

@@ -1,10 +1,15 @@
 import { Express, Request, Response } from "express";
 import { CacheContainer } from "node-ts-cache";
-import { param, body, validationResult } from "express-validator";
+import { param, body, validationResult, query } from "express-validator";
 import { env } from "process";
 
 import { ILink } from "../models/ILink";
-import { putLink, getLink, deleteLink } from "../services/links.service";
+import {
+  putLink,
+  getLink,
+  deleteLink,
+  getLinks,
+} from "../services/links.service";
 import { validateBody } from "../libs/errorHandler";
 import { pipe } from "../libs/common";
 
@@ -28,7 +33,7 @@ export default class LinksController {
                 const cachedLink = await this.cacheNode.getItem<ILink>(_slug);
                 return cachedLink
                   ? res.status(200).json(cachedLink)
-                  : this.getLinks(_slug).then((link: any) => {
+                  : this.getLink(_slug).then((link: any) => {
                       link.redirect
                         ? res.redirect(link.redirect)
                         : res
@@ -39,6 +44,25 @@ export default class LinksController {
         )(req);
       }
     );
+    app.get("/api/links", [], async (req: Request, res: Response) => {
+      pipe(validateBody, (err: any) =>
+        err
+          ? res.status(400).json({ status: false, error: err })
+          : (async () => {
+              const cachedLinks: ILink[] =
+                (await this.cacheNode.getItem<ILink[]>("all")) || [];
+              return cachedLinks.length > 0
+                ? res.status(200).json(cachedLinks)
+                : this.getLinks().then((links: any) => {
+                    links
+                      ? res.json(links)
+                      : res
+                          .status(404)
+                          .json({ status: false, error: links.error });
+                  });
+            })()
+      )(req);
+    });
 
     app.post(
       "/api/links",
@@ -65,15 +89,21 @@ export default class LinksController {
     );
   }
 
-  public deleteLink = async (_slug: string) =>  await deleteLink(_slug);
+  public deleteLink = async (_slug: string) => {
+    this.cacheNode.clear();
+    return await deleteLink(_slug);
+  };
 
   public insertLink = async (link: ILink) => {
     const createdLink = (await putLink(link)) as ILink;
+
+    this.cacheNode.clear();
     await this.cacheNode.setItem(createdLink.slug, null, { ttl: 0 });
+
     return createdLink;
   };
 
-  public getLinks = async (_slug: string) => {
+  public getLink = async (_slug: string) => {
     try {
       const link: ILink = (await getLink(_slug)) as ILink;
       const { redirect } = link;
@@ -83,6 +113,22 @@ export default class LinksController {
       return {
         redirect: redirect ? redirect : null,
         error: redirect ? null : "Redirect not found",
+      };
+    } catch (error) {
+      return {
+        redirect: false,
+        error: "Link not found",
+      };
+    }
+  };
+
+  public getLinks = async () => {
+    try {
+      const links: ILink[] = (await getLinks()) as ILink[];
+      await this.cacheNode.setItem("all", links, { ttl: CACHE_TTL });
+      return {
+        redirect: links,
+        error: links[0] ? null : [],
       };
     } catch (error) {
       return {

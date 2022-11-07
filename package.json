@@ -16,6 +16,7 @@
     "@aws-sdk/client-dynamodb": "^3.145.0",
     "@aws-sdk/lib-dynamodb": "^3.145.0",
     "@types/lowdb": "^1.0.11",
+    "aws-sdk": "^2.1248.0",
     "cluster": "^0.7.7",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
