@@ -10,23 +10,29 @@ import cors from "cors";
 import cacheNode from "./src/libs/cache";
 import rateLimitModule from "./src/libs/rateLimit";
 import { defaultDocumentation } from "./src/libs/documentation";
-import { corsConfig, bodyParserConfig } from "./src/libs/configuration";
+import { bodyParserConfig } from "./src/libs/configuration";
 import { invalidBody } from "./src/libs/errorHandler";
+
 import { apiKeyGuard } from "./src/auth/apiKeys.guard";
 
-import LinksController from "./src/controllers/links.controller";
 import AnalyticsController from "./src/controllers/analytics.controller";
+
+import LinksRoute from "./src/routes/links.route";
 
 const app: Express = express();
 const port: number = parseInt(env.PORT as string) || 3000;
 
-app.use((req: any, err: any, res: Response, next: NextFunction) => {
+/*app.use((req: any, err: any, res: Response, next: NextFunction) => {
   req.body && err ? invalidBody(err, res) : next();
-});
+});*/
 
 app.use(morgan("common"));
 app.use(compression());
-app.use(cors(corsConfig));
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN,
+  })
+);
 app.use(express.json());
 app.use(bodyParser.urlencoded(bodyParserConfig));
 
@@ -34,7 +40,7 @@ defaultDocumentation(app);
 rateLimitModule(app);
 
 const boot = () => {
-  new LinksController(app, apiKeyGuard, cacheNode);
+  new LinksRoute(app, apiKeyGuard, cacheNode);
   new AnalyticsController(app, apiKeyGuard, cacheNode);
 
   app.listen(port, () =>

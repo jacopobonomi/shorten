@@ -1,109 +1,40 @@
-import { Express, Request, Response } from "express";
 import { CacheContainer } from "node-ts-cache";
-import { param, body, validationResult, query } from "express-validator";
 import { env } from "process";
 
 import { ILink } from "../models/ILink";
+import { IRedirect } from "../models/IRedirect";
 import {
   putLink,
   getLink,
   deleteLink,
   getLinks,
 } from "../services/links.service";
-import { validateBody } from "../libs/errorHandler";
-import { pipe } from "../libs/common";
 
 const CACHE_TTL: number = parseInt(env.CACHE_TTL as string) || 60;
 
 export default class LinksController {
-  private cacheNode;
+  private cacheNode: CacheContainer;
 
-  constructor(app: Express, apiGuard: any, cacheNode: CacheContainer) {
+  constructor(cacheNode: CacheContainer) {
     this.cacheNode = cacheNode;
-
-    app.get(
-      "/:_slug",
-      [param("_slug").isString().trim()],
-      async (req: Request, res: Response) => {
-        pipe(validateBody, (err: any) =>
-          err
-            ? res.status(400).json({ status: false, error: err })
-            : (async () => {
-                const { _slug } = req.params;
-                const cachedLink = await this.cacheNode.getItem<ILink>(_slug);
-                return cachedLink
-                  ? res.status(200).json(cachedLink)
-                  : this.getLink(_slug).then((link: any) => {
-                      link.redirect
-                        ? res.redirect(link.redirect)
-                        : res
-                            .status(404)
-                            .json({ status: false, error: link.error });
-                    });
-              })()
-        )(req);
-      }
-    );
-    app.get("/api/links", [], async (req: Request, res: Response) => {
-      pipe(validateBody, (err: any) =>
-        err
-          ? res.status(400).json({ status: false, error: err })
-          : (async () => {
-              const cachedLinks: ILink[] =
-                (await this.cacheNode.getItem<ILink[]>("all")) || [];
-              return cachedLinks.length > 0
-                ? res.status(200).json(cachedLinks)
-                : this.getLinks().then((links: any) => {
-                    links
-                      ? res.json(links)
-                      : res
-                          .status(404)
-                          .json({ status: false, error: links.error });
-                  });
-            })()
-      )(req);
-    });
-
-    app.post(
-      "/api/links",
-      apiGuard,
-      body("redirect").isString().trim(),
-      async (req: Request, res: Response) =>
-        pipe(validateBody, (err: any) =>
-          err
-            ? res.status(400).json({ status: false, error: err })
-            : res.json(this.insertLink(req.body))
-        )(req)
-    );
-
-    app.delete(
-      "/api/links/:_slug",
-      apiGuard,
-      [param("_slug").isString().trim()],
-      async (req: Request, res: Response) =>
-        pipe(validateBody, (err: any) =>
-          err
-            ? res.status(400).json({ status: false, error: err })
-            : res.json(this.deleteLink(req.params._slug))
-        )(req)
-    );
   }
 
   public deleteLink = async (_slug: string) => {
-    this.cacheNode.clear();
+    await this.cacheNode.setItem(_slug, null, { ttl: 0 });
+    await this.cacheNode.setItem("all-links", null, { ttl: 0 });
     return await deleteLink(_slug);
   };
 
-  public insertLink = async (link: ILink) => {
-    const createdLink = (await putLink(link)) as ILink;
-
+  public insertLink = async (link: ILink): Promise<ILink> => {
+    const createdLink: ILink = (await putLink(link)) as ILink;
     this.cacheNode.clear();
     await this.cacheNode.setItem(createdLink.slug, null, { ttl: 0 });
+    await this.cacheNode.setItem("all-links", null, { ttl: 0 });
 
     return createdLink;
   };
 
-  public getLink = async (_slug: string) => {
+  public getLink = async (_slug: string): Promise<IRedirect> => {
     try {
       const link: ILink = (await getLink(_slug)) as ILink;
       const { redirect } = link;
@@ -111,8 +42,8 @@ export default class LinksController {
       await this.cacheNode.setItem(_slug, link, { ttl: CACHE_TTL });
 
       return {
-        redirect: redirect ? redirect : null,
-        error: redirect ? null : "Redirect not found",
+        redirect: redirect ? redirect : undefined,
+        error: redirect ? undefined : "Redirect not found",
       };
     } catch (error) {
       return {
@@ -122,19 +53,14 @@ export default class LinksController {
     }
   };
 
-  public getLinks = async () => {
+  public getLinks = async (): Promise<ILink[]> => {
     try {
-      const links: ILink[] = (await getLinks()) as ILink[];
-      await this.cacheNode.setItem("all", links, { ttl: CACHE_TTL });
-      return {
-        redirect: links,
-        error: links[0] ? null : [],
-      };
+      const links: ILink[] | PromiseLike<ILink[]>[] =
+        (await getLinks()) as ILink[];
+      await this.cacheNode.setItem("all-links", links, { ttl: CACHE_TTL });
+      return links;
     } catch (error) {
-      return {
-        redirect: false,
-        error: "Link not found",
-      };
+      return [];
     }
   };
 }

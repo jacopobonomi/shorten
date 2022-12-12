@@ -11,6 +11,7 @@ import {
 import { generateSlug } from "random-word-slugs";
 
 import { db } from "../libs/ddbDocClient";
+import { IDeleteStatus } from "../models/IDeleteStatus";
 
 import { ILink, ILinkDTO } from "../models/ILink";
 
@@ -24,6 +25,7 @@ export const putLink = async ({
   readable,
   redirect,
   slug,
+  enabled,
 }: ILinkDTO): Promise<ILink | undefined> => {
   const insertSlug: string = slug
     ? slug
@@ -35,6 +37,7 @@ export const putLink = async ({
     redirect,
     short_link: `${BASE_PATH}/${insertSlug}`,
     slug: insertSlug,
+    enabled,
   };
 
   const params: PutCommandInput = {
@@ -82,7 +85,7 @@ export const getLinks = async (): Promise<ILink[] | undefined> => {
   }
 };
 
-export const deleteLink = async (slug: string): Promise<any | undefined> => {
+export const deleteLink = async (slug: string): Promise<IDeleteStatus> => {
   const params: DeleteCommandInput = {
     TableName,
     Key: {
@@ -94,6 +97,6 @@ export const deleteLink = async (slug: string): Promise<any | undefined> => {
     return { message: "Link deleted", status: "success" };
   } catch (err) {
     console.error(err);
-    throw err;
+    throw { message: "Link error on delete", status: "error" };
   }
 };

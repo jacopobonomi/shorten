@@ -13,8 +13,7 @@ export default class AnalyticsController {
 
   constructor(app: Express, apiGuard: any, cacheNode: CacheContainer) {
     this.cacheNode = cacheNode;
-    
   }
-
+  
 
 }

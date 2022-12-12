@@ -1,4 +1,4 @@
-import { Express, Request, Response } from "express";
+import { Request } from "express";
 import { validationResult } from "express-validator";
 
 export const invalidBody = (err: any, res: any) => {
@@ -7,8 +7,5 @@ export const invalidBody = (err: any, res: any) => {
 
 export const validateBody = (req: Request) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return errors.array();
-  }
-  return false;
+  return !errors.isEmpty() ? errors.array() : false;
 };

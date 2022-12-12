@@ -1,8 +1,6 @@
 import {
   PutCommand,
-  GetCommand,
   PutCommandInput,
-  GetCommandInput,
   ScanCommand,
   ScanCommandInput,
 } from "@aws-sdk/lib-dynamodb";
@@ -22,28 +20,28 @@ const TableName = process.env.LINKS_TABLE_NAME || "analytics";
  * @example await getAnalyticsSetting()
  */
 export const putAnalyticsSetting = async (
-  iAnalyticsSetting: IAnalyticsSetting
+  analyticsSetting: IAnalyticsSetting
 ) => {
   const existingAnalyticsSetting = await getAnalyticsSetting();
 
   const slugs: IAnalyticsSlug[] = existingAnalyticsSetting?.slugs || [];
-  const newSlugs: IAnalyticsSlug[] = iAnalyticsSetting.slugs.map(
-    (iAnalyticsSlug) => {
+  const newSlugs: IAnalyticsSlug[] = analyticsSetting.slugs.map(
+    (analyticsSetting) => {
       const existingSlug = slugs.find(
-        (slug) => slug.slug === iAnalyticsSlug.slug
+        (slug) => slug.slug === analyticsSetting.slug
       );
       return existingSlug
         ? {
             ...existingSlug,
-            ...iAnalyticsSlug,
+            ...analyticsSetting,
           }
-        : iAnalyticsSlug;
+        : analyticsSetting;
     }
   );
 
   const newAnalyticsSetting = {
     ...existingAnalyticsSetting,
-    ...iAnalyticsSetting,
+    ...analyticsSetting,
     slugs: newSlugs,
   };
 
