@@ -7,22 +7,24 @@ import {
   DeleteCommandInput,
 } from "@aws-sdk/lib-dynamodb";
 import { generateSlug } from "random-word-slugs";
+import { nanoid } from "nanoid"; // Proper import
 
-import { db } from "../libs/ddbDocClient";
-
+import { db } from "../libs/dbClient"; // Updated import
 import { ILink, ILinkDTO } from "../models/ILink";
+import { config } from "../libs/config"; // Using centralized config
+import { AppError, ErrorType } from "../libs/errorHandler";
 
-//FIX: Strange import bug
-const { nanoid } = require("nanoid");
+const TABLE_NAME = config.db.tableName;
+const BASE_PATH = config.app.baseUrl;
 
-const TABLE_NAME = process.env.LINKS_TABLE_NAME || "links";
-const BASE_PATH = process.env.BASE_URL;
-
+/**
+ * Creates a new link in the database
+ */
 export const putLink = async ({
   readable,
   redirect,
   slug,
-}: ILinkDTO): Promise<ILink | undefined> => {
+}: ILinkDTO): Promise<ILink> => {
   const insertSlug: string = slug
     ? slug
     : readable
@@ -44,37 +46,75 @@ export const putLink = async ({
     await db.send(new PutCommand(params));
     return newLink;
   } catch (err) {
-    console.error(err);
+    console.error("Error creating link:", err);
+    throw new AppError(
+      "Failed to create link",
+      ErrorType.DB_ERROR,
+      500,
+      { originalError: err }
+    );
   }
 };
 
-export const getLink = async (slug: string): Promise<ILink | undefined> => {
+/**
+ * Retrieves a link by slug
+ */
+export const getLink = async (slug: string): Promise<ILink> => {
   const params: GetCommandInput = {
     TableName: TABLE_NAME,
     Key: {
       slug: slug,
     },
   };
+  
   try {
-    return (await (
-      await db.send(new GetCommand(params))
-    ).Item) as ILink;
+    const result = await db.send(new GetCommand(params));
+    
+    if (!result.Item) {
+      throw new AppError(
+        "Link not found",
+        ErrorType.NOT_FOUND,
+        404,
+        { slug }
+      );
+    }
+    
+    return result.Item as ILink;
   } catch (err) {
-    console.error(err);
+    if (err instanceof AppError) {
+      throw err;
+    }
+    
+    console.error("Error fetching link:", err);
+    throw new AppError(
+      "Failed to retrieve link",
+      ErrorType.DB_ERROR,
+      500,
+    );
   }
 };
 
-export const deleteLink = async (slug: string): Promise<any | undefined> => {
+/**
+ * Deletes a link by slug
+ */
+export const deleteLink = async (slug: string): Promise<{message: string, status: string}> => {
   const params: DeleteCommandInput = {
     TableName: TABLE_NAME,
     Key: {
       slug: slug,
     },
   };
+  
   try {
     await db.send(new DeleteCommand(params));
     return { message: "Link deleted", status: "success" };
   } catch (err) {
-    console.error(err);
+    console.error("Error deleting link:", err);
+    throw new AppError(
+      "Failed to delete link",
+      ErrorType.DB_ERROR,
+      500,
+      { originalError: err, slug }
+    );
   }
 };

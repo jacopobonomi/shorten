@@ -1,9 +1,5 @@
 import { Express } from "express";
-import swaggerUi from "swagger-ui-express";
+import * as swaggerUi from "swagger-ui-express";
+import { linksDocs } from "../../docs/links.doc";
 
-const { linksDocs } = require("../../docs/links.doc");
-
-export const defaultDocumentation = (app: Express) => {
-  app.use("/links/docs", swaggerUi.serve);
-  app.get("/links/docs", swaggerUi.setup(linksDocs));
-};
+export const defaultDocumentation = (app: Express) => {};

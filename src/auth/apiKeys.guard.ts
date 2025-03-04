@@ -1,30 +1,52 @@
-import { env } from "process";
 import { Request, Response, NextFunction } from "express";
+import { config } from "../libs/config";
+import { AppError, ErrorType } from "../libs/errorHandler";
 
 export const apiKeyGuard = (
   req: Request,
   res: Response,
   next: NextFunction
 ): any => {
-  if (!env.API_KEYS) {
+  const apiKeys = config.security.apiKeys;
+  
+  // Skip validation if no API keys configured
+  if (!apiKeys || apiKeys.length === 0) {
     console.warn("No API Keys found in env, all requests will be allowed");
     next();
     return;
   }
 
-  const unauthorizedMessage = {
-    message: "Unauthorized",
-  };
-
   const authorization: string | undefined = req.header("api-key");
-  if (authorization === undefined) {
-    return res.status(400).json(unauthorizedMessage);
+  
+  // Return error if no API key provided
+  if (!authorization) {
+    const error = new AppError(
+      "API key required",
+      ErrorType.UNAUTHORIZED,
+      401,
+      { header: "api-key" }
+    );
+    
+    return res.status(error.statusCode).json({
+      message: error.message,
+      status: "error"
+    });
   }
-  const apiKeys: string[] = (env.API_KEYS as string)
-    .replace('"', "")
-    .trim()
-    .split(",");
-  return !apiKeys.includes(authorization)
-    ? res.status(400).json(unauthorizedMessage)
-    : next();
+  
+  // Validate the API key
+  if (!apiKeys.includes(authorization)) {
+    const error = new AppError(
+      "Invalid API key",
+      ErrorType.UNAUTHORIZED,
+      401
+    );
+    
+    return res.status(error.statusCode).json({
+      message: error.message,
+      status: "error"
+    });
+  }
+  
+  // Key is valid, proceed
+  next();
 };

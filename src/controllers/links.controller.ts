@@ -1,92 +1,132 @@
-import { Express, Request, Response } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import { CacheContainer } from "node-ts-cache";
 import { param, body, validationResult } from "express-validator";
-import { env } from "process";
 
 import { ILink } from "../models/ILink";
 import { putLink, getLink, deleteLink } from "../services/links.service";
+import { config } from "../libs/config";
+import { AppError, ErrorType } from "../libs/errorHandler";
 
-const CACHE_TTL: number = parseInt(env.CACHE_TTL as string) || 60;
+// Create a validation middleware to remove duplication
+const validate = (req: Request, res: Response, next: NextFunction): void => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new AppError(
+      "Validation failed",
+      ErrorType.VALIDATION,
+      400,
+      { errors: errors.array() }
+    );
+  }
+  next();
+};
 
 export default class LinksController {
-  private cacheNode;
+  private cacheNode: CacheContainer;
 
   constructor(app: Express, apiGuard: any, cacheNode: CacheContainer) {
     this.cacheNode = cacheNode;
 
+    // Route for redirecting to original URL
     app.get(
-      "/:_slug",
-      [param("_slug").isString().exists().trim()],
-      async (req: Request, res: Response) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-          return res.status(400).json({ errors: errors.array() });
-        }
-        return this.getLinks(req, res);
-      }
+      "/:slug",
+      [
+        param("slug").isString().exists().trim(),
+        validate
+      ],
+      this.getLinks
     );
 
+    // Route for creating a new short link
     app.post(
       "/api/links",
       apiGuard,
-      body("redirect").isString().exists().trim(),
-      async (req: Request, res: Response) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-          return res.status(400).json({ errors: errors.array() });
-        }
-        return this.insertLink(req, res);
-      }
+      [
+        body("redirect").isString().exists().trim().isURL(),
+        body("readable").optional().isBoolean(),
+        body("slug").optional().isString().trim(),
+        validate
+      ],
+      this.insertLink
     );
 
+    // Route for deleting a link
     app.delete(
-      "/api/links/:_slug",
+      "/api/links/:slug",
       apiGuard,
-      [param("_slug").isString().exists().trim()],
-      async (req: Request, res: Response) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-          return res.status(400).json({ errors: errors.array() });
-        }
-        return this.deleteLink(req, res);
-      }
+      [
+        param("slug").isString().exists().trim(),
+        validate
+      ],
+      this.deleteLink
     );
   }
 
-  public deleteLink = async (req: Request, res: Response) => {
-    const { _slug } = req.params;
-    return res.json(await deleteLink(_slug));
+  /**
+   * Deletes a link by slug
+   */
+  public deleteLink = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { slug } = req.params;
+      const result = await deleteLink(slug);
+      
+      // Clear cache for this slug
+      await this.cacheNode.setItem(slug, null, { ttl: 0 });
+      
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
   };
 
-  public insertLink = async (req: Request, res: Response) => {
-    const { body: link } = req;
-    const createdLink = (await putLink(link)) as ILink;
-
-    await this.cacheNode.setItem(createdLink.slug, null, { ttl: 0 });
-
-    res.json(createdLink);
+  /**
+   * Creates a new short link
+   */
+  public insertLink = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const createdLink = await putLink(req.body);
+      
+      // Clear cache entry if it exists
+      await this.cacheNode.setItem(createdLink.slug, null, { ttl: 0 });
+      
+      res.json(createdLink);
+    } catch (error) {
+      next(error);
+    }
   };
 
-  public getLinks = async (req: Request, res: Response) => {
-    const { _slug } = req.params;
-    const cachedLink = await this.cacheNode.getItem<ILink>(_slug);
+  /**
+   * Redirects to the original URL based on slug
+   */
+  public getLinks = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { slug } = req.params;
+      
+      // Try to get link from cache first
+      const cachedLink = await this.cacheNode.getItem<ILink>(slug);
 
-    if (cachedLink) {
-      return res.redirect(cachedLink.redirect);
-    } else {
-      try {
-        const link: ILink = (await getLink(_slug)) as ILink;
-        const { redirect } = link;
-
-        if (redirect) {
-          this.cacheNode.setItem(_slug, link, { ttl: CACHE_TTL });
-          return res.redirect(redirect);
-        } else {
-          return res.status(404).json({ message: "redirect not found" });
-        }
-      } catch (error) {
-        return res.status(404).json({ message: "slug not found" });
+      if (cachedLink) {
+        res.redirect(cachedLink.redirect);
+        return;
       }
+
+      // If not in cache, get from database
+      try {
+        const link = await getLink(slug);
+        
+        // Cache the link for future requests
+        await this.cacheNode.setItem(slug, link, { ttl: config.cache.ttl });
+        
+        res.redirect(link.redirect);
+      } catch (error) {
+        if (error instanceof AppError && error.type === ErrorType.NOT_FOUND) {
+          res.status(404).json({ message: "Link not found", status: "error" });
+          return;
+        }
+        throw error;
+      }
+    } catch (error) {
+      next(error);
     }
   };
 }

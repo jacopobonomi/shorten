@@ -1,12 +1,10 @@
 require("dotenv").config();
-const bodyParser = require("body-parser");
-
-import express, { Express, Response, Request, NextFunction } from "express";
-import { env } from "process";
+import express, { Express } from "express";
 import morgan from "morgan";
 import cors, { CorsOptions } from "cors";
-import compression from "compression";
+import bodyParser from "body-parser";
 
+import { config } from "./src/libs/config";
 import cacheNode from "./src/libs/cache";
 import rateLimitModule from "./src/libs/rateLimit";
 import { defaultDocumentation } from "./src/libs/documentation";
@@ -16,7 +14,7 @@ import { apiKeyGuard } from "./src/auth/apiKeys.guard";
 import LinksController from "./src/controllers/links.controller";
 
 const app: Express = express();
-const port: number = parseInt(env.PORT as string) || 3000;
+const port: number = config.app.port;
 
 const corsConfig: CorsOptions = {
   origin: ["*"],
@@ -29,7 +27,6 @@ const bodyParserConfig = {
 };
 
 app.use(morgan("common"));
-app.use(compression());
 app.use(cors(corsConfig));
 app.use(express.json());
 app.use(bodyParser.urlencoded(bodyParserConfig));
@@ -37,8 +34,8 @@ app.use(bodyParser.urlencoded(bodyParserConfig));
 defaultDocumentation(app);
 rateLimitModule(app);
 
-const errorHandler: ErrorHandler = new ErrorHandler(app);
-const linkController = new LinksController(app, apiKeyGuard, cacheNode);
+new ErrorHandler(app);
+new LinksController(app, apiKeyGuard, cacheNode);
 
 app.listen(port, () =>
   console.log(`
